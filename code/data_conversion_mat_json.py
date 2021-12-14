@@ -1,11 +1,9 @@
 # %%
 import scipy.io as sio
-import numpy as np
-import pandas as pd
+from tqdm import tqdm
 import re
 import json
 from glob import glob
-pd.set_option("display.max_columns",None)
 
 # %% Read Data List in Directory
 data_list = glob('../data/0Pooled_Data/*mat')
@@ -15,7 +13,7 @@ data_list.sort()
 SAVEPATH = '../data/RRI/'
 PATTERN = r"E(?P<subject>\d+)[_](?P<visit>\d+)[_]ECG[_]Session(?P<session>\d+)[_]hrv"
 
-for file_nm in data_list:
+for file_nm in tqdm(data_list):
     info = re.search(PATTERN, file_nm)
     
     rri_mat = sio.loadmat(file_nm, uint16_codec='latin1')
