@@ -10,7 +10,7 @@ class CNN_Block(pl.LightningModule):
         
         self.cnn_block = nn.Sequential(nn.Conv1d(in_channels=input_channels, out_channels=100, kernel_size=124, padding=1), 
                                        nn.Conv1d(in_channels=100, out_channels=output_channels, kernel_size=124, padding=1),
-                                       nn.AvgPool1d(kernel_size=100, stride=1, padding=1))
+                                       nn.AvgPool1d(kernel_size=4, stride=1, padding=1))
         
     def forward(self, x):
         y = torch.relu(self.cnn_block(x))
@@ -22,25 +22,24 @@ class CNN_FC_layer(pl.LightningModule):
         super().__init__()
         
         self.cnn_blocks = nn.Sequential(CNN_Block(input_channels=1, output_channels=100),
-                                        nn.ReLU(), 
-                                        CNN_Block(input_channels=100, output_channels=200),
                                         nn.ReLU(),
-                                        # CNN_Block(input_channels=200, output_channels=100),
+                                        CNN_Block(input_channels=100, output_channels=300),
+                                        nn.ReLU(),
+                                        CNN_Block(input_channels=300, output_channels=200),
+                                        nn.ReLU(),
+                                        # CNN_Block(input_channels=200, output_channels=150),
                                         # nn.ReLU(),
-                                        # CNN_Block(input_channels=200, output_channels=50),
-                                        # nn.ReLU(),
-                                        CNN_Block(input_channels=200, output_channels=10),
+                                        CNN_Block(input_channels=200, output_channels=50),
                                         nn.ReLU(),
                                         nn.Flatten())
         
-        self.linear = nn.Sequential(nn.Linear(1830, 1000),
-                                    nn.Dropout(p=0.5),
+        self.linear = nn.Sequential(nn.Linear(11400, 1000),
                                     nn.ReLU(),
-                                    nn.Linear(1000, 100),
-                                    nn.Dropout(p=0.5),
+                                    nn.BatchNorm1d(num_features=1000),
+                                    nn.Linear(1000, 500),
                                     nn.ReLU(),
-                                    nn.Linear(100, output_class), 
-                                    nn.Dropout(p=0.5),)
+                                    nn.BatchNorm1d(num_features=500),
+                                    nn.Linear(500, output_class))
         
     
     def forward(self, x):
@@ -52,14 +51,14 @@ class CNN_FC_layer(pl.LightningModule):
 # %%
 
 if __name__ == '__main__':
-    test = torch.rand((1, 1200))
+    test = torch.rand((2, 1200))
     cnn_layer = CNN_Block(input_channels=1, output_channels=10)
-    tmp = cnn_layer.forward(test.view(1, 1, 1200))
+    tmp = cnn_layer.forward(test.view(2, 1, 1200))
     print(tmp)
     print(tmp.shape)
     
     cnn_layer = CNN_FC_layer(output_class=2)
-    tmp = cnn_layer.forward(test.view(1, 1, 1200))
+    tmp = cnn_layer.forward(test.view(2, 1, 1200))
     print(tmp)
     print(tmp.shape)
 # %%
