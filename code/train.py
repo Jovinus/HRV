@@ -15,9 +15,9 @@ class Sequence_Modeling(pl.LightningModule):
         # self.linear_0 = nn.Linear(1000, 100)
         # self.linear_1 = nn.Linear(100, 2)
         self.loss = nn.NLLLoss()
-        self.softmax = nn.LogSoftmax(dim=1)
+        self.softmax = nn.LogSoftmax(dim=0)
         self.accuracy = Accuracy()
-        self.model = CNN_FC_layer(output_class=3)
+        self.model = CNN_FC_layer(output_class=2)
         
     def forward(self, x):
         # output, h1 = self.rnn(x)
@@ -53,7 +53,7 @@ class Sequence_Modeling(pl.LightningModule):
     def validation_epoch_end(self, val_step_outputs):
         avg_val_loss = torch.tensor([x['loss'] for x in val_step_outputs]).mean()
         avg_val_acc = torch.tensor([x['progress_bar']['val_acc'] for x in val_step_outputs]).mean()
-        # print(avg_val_acc)
+        print(avg_val_acc)
         pbar = {'avg_val_acc': avg_val_acc}
         return {'val_loss': avg_val_loss, 'log':pbar, 'progress_bar': pbar}
     
@@ -78,21 +78,21 @@ df_orig = pd.read_csv(MASTER_TABLE_DATAPATH)
 subject = list(set(df_orig['subject']))
 
 from sklearn.model_selection import train_test_split
-train_id, test_id = train_test_split(subject, test_size=0.1, random_state=1004)
+train_id, test_id = train_test_split(subject, test_size=0.2, random_state=1004)
 
-train_data, test_data = df_orig.query("subject.isin(@train_id) & session == [1, 2, 3]", engine='python').reset_index(drop=True), \
-    df_orig.query("subject.isin(@test_id) & session == [1, 2, 3]", engine='python').reset_index(drop=True)
+train_data, test_data = df_orig.query("subject.isin(@train_id) & session == [1, 2]", engine='python').reset_index(drop=True), \
+    df_orig.query("subject.isin(@test_id) & session == [1, 2]", engine='python').reset_index(drop=True)
 
 train_dataset = CustomDataset(data_table=train_data, data_dir=SIGNAL_DATAPATH)
 test_dataset = CustomDataset(data_table=test_data, data_dir=SIGNAL_DATAPATH)
 
 trainset_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, collate_fn=padd_seq, num_workers=4)
-testset_loader = DataLoader(test_dataset, batch_size=32, shuffle=False, collate_fn=padd_seq, num_workers=4)
+testset_loader = DataLoader(test_dataset, batch_size=16, shuffle=False, collate_fn=padd_seq, num_workers=4)
 # %%
 class LitProgressBar(TQDMProgressBar):
     def init_validation_tqdm(self):
         bar = super().init_validation_tqdm()
-        bar.set_description('running validation ...')
+        # bar.set_description('running validation ...')
         return bar
 bar = LitProgressBar()
 # %%
