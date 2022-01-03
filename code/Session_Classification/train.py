@@ -70,8 +70,8 @@ class Sequence_Modeling(pl.LightningModule):
     def test_step(self, batch, batch_idx):
         return self.evaluate(batch, 'test')
 # %%
-SIGNAL_DATAPATH = '../data/RRI'
-MASTER_TABLE_DATAPATH = '../data/master_table.csv'
+SIGNAL_DATAPATH = '../../data/RRI'
+MASTER_TABLE_DATAPATH = '../../data/master_table.csv'
 
 df_orig = pd.read_csv(MASTER_TABLE_DATAPATH)
 

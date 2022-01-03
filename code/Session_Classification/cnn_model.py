@@ -10,7 +10,7 @@ class CNN_Block(pl.LightningModule):
         
         self.cnn_block = nn.Sequential(nn.Conv1d(in_channels=input_channels, out_channels=100, kernel_size=124, padding=1), 
                                        nn.Conv1d(in_channels=100, out_channels=output_channels, kernel_size=124, padding=1),
-                                       nn.AvgPool1d(kernel_size=4, stride=1, padding=1))
+                                       nn.MaxPool1d(kernel_size=4, stride=1, padding=1))
         
     def forward(self, x):
         y = torch.relu(self.cnn_block(x))
@@ -21,15 +21,19 @@ class CNN_FC_layer(pl.LightningModule):
     def __init__(self, output_class):
         super().__init__()
         
-        self.cnn_blocks = nn.Sequential(CNN_Block(input_channels=1, output_channels=100),
+        self.cnn_blocks = nn.Sequential(CNN_Block(input_channels=1, output_channels=200),
+                                        nn.BatchNorm1d(num_features=200),
                                         nn.ReLU(),
-                                        CNN_Block(input_channels=100, output_channels=300),
+                                        CNN_Block(input_channels=200, output_channels=400),
+                                        nn.BatchNorm1d(num_features=400),
                                         nn.ReLU(),
-                                        CNN_Block(input_channels=300, output_channels=200),
+                                        CNN_Block(input_channels=400, output_channels=300),
+                                        nn.BatchNorm1d(num_features=300),
                                         nn.ReLU(),
                                         # CNN_Block(input_channels=200, output_channels=150),
                                         # nn.ReLU(),
-                                        CNN_Block(input_channels=200, output_channels=50),
+                                        CNN_Block(input_channels=300, output_channels=50),
+                                        nn.BatchNorm1d(num_features=50),
                                         nn.ReLU(),
                                         nn.Flatten())
         
