@@ -103,7 +103,6 @@ model = Sequence_Modeling()
 logger = TensorBoardLogger("tb_logs", name="my_model")
 
 trainer = pl.Trainer(logger=logger,
-                     progress_bar_refresh_rate = 1, 
                      max_epochs=100, 
                      gpus=1, 
                      gradient_clip_val=0.5, 

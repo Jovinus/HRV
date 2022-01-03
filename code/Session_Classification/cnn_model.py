@@ -8,9 +8,12 @@ class CNN_Block(pl.LightningModule):
     def __init__(self, input_channels, output_channels):
         super().__init__()
         
-        self.cnn_block = nn.Sequential(nn.Conv1d(in_channels=input_channels, out_channels=100, kernel_size=124, padding=1), 
-                                       nn.Conv1d(in_channels=100, out_channels=output_channels, kernel_size=124, padding=1),
-                                       nn.MaxPool1d(kernel_size=4, stride=1, padding=1))
+        self.cnn_block = nn.Sequential(nn.Conv1d(in_channels=input_channels, out_channels=300, kernel_size=14*2, padding=1),
+                                       nn.BatchNorm1d(num_features=300),
+                                       nn.ReLU(), 
+                                       nn.Conv1d(in_channels=300, out_channels=output_channels, kernel_size=14*2, padding=1),
+                                       nn.BatchNorm1d(num_features=output_channels),
+                                       nn.ReLU())
         
     def forward(self, x):
         y = torch.relu(self.cnn_block(x))
@@ -22,28 +25,26 @@ class CNN_FC_layer(pl.LightningModule):
         super().__init__()
         
         self.cnn_blocks = nn.Sequential(CNN_Block(input_channels=1, output_channels=200),
-                                        nn.BatchNorm1d(num_features=200),
-                                        nn.ReLU(),
                                         CNN_Block(input_channels=200, output_channels=400),
-                                        nn.BatchNorm1d(num_features=400),
-                                        nn.ReLU(),
+                                        nn.MaxPool1d(kernel_size=4, stride=1, padding=1),
+                                        CNN_Block(input_channels=400, output_channels=500),
+                                        CNN_Block(input_channels=500, output_channels=400),
+                                        nn.MaxPool1d(kernel_size=14, stride=1, padding=1),
                                         CNN_Block(input_channels=400, output_channels=300),
-                                        nn.BatchNorm1d(num_features=300),
-                                        nn.ReLU(),
-                                        # CNN_Block(input_channels=200, output_channels=150),
-                                        # nn.ReLU(),
-                                        CNN_Block(input_channels=300, output_channels=50),
-                                        nn.BatchNorm1d(num_features=50),
-                                        nn.ReLU(),
+                                        CNN_Block(input_channels=300, output_channels=200),
+                                        nn.MaxPool1d(kernel_size=14, stride=1, padding=1),
+                                        CNN_Block(input_channels=200, output_channels=100),
+                                        CNN_Block(input_channels=100, output_channels=50),
+                                        nn.AvgPool1d(kernel_size=14, stride=1, padding=1),
                                         nn.Flatten())
         
-        self.linear = nn.Sequential(nn.Linear(11400, 1000),
+        self.linear = nn.Sequential(nn.Linear(38300, 5000),
+                                    nn.ReLU(),
+                                    nn.BatchNorm1d(num_features=5000),
+                                    nn.Linear(5000, 1000),
                                     nn.ReLU(),
                                     nn.BatchNorm1d(num_features=1000),
-                                    nn.Linear(1000, 500),
-                                    nn.ReLU(),
-                                    nn.BatchNorm1d(num_features=500),
-                                    nn.Linear(500, output_class))
+                                    nn.Linear(1000, output_class))
         
     
     def forward(self, x):
