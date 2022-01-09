@@ -8,6 +8,7 @@ from my_dataloader import *
 from torch.utils.data import DataLoader
 from cnn_model import *
 from dnn_model import *
+from residual_cnn import *
 # %%
 class Sequence_Modeling(pl.LightningModule):
     def __init__(self) -> None:
@@ -19,7 +20,8 @@ class Sequence_Modeling(pl.LightningModule):
         self.softmax = nn.LogSoftmax(dim=0)
         self.accuracy = Accuracy()
         # self.model = CNN_FC_layer(output_class=2)
-        self.model = DNN_Model(output_class=2)
+        # self.model = DNN_Model(output_class=2)
+        self.model = Residual_CNN_Model(output_class=2)
         
     def forward(self, x):
         # output, h1 = self.rnn(x)
@@ -110,7 +112,7 @@ logger = TensorBoardLogger("tb_logs", name="my_model")
 trainer = pl.Trainer(logger=logger,
                      max_epochs=1000, 
                      gpus=1, 
-                     gradient_clip_val=0.5, 
+                     gradient_clip_val=0.3, 
                      log_every_n_steps=1, 
                      accumulate_grad_batches=1,
                      callbacks=[bar])
