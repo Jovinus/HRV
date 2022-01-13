@@ -68,6 +68,7 @@ class Residual_CNN_Model(pl.LightningModule):
             y_h = self.res_block_4[i](y_h)
         
         y_pooled = self.global_pool(y_h)
+        # y_pooled = self.conv_1_1(y_h)
         
         y_projected = nn.Flatten()(y_pooled)
         
