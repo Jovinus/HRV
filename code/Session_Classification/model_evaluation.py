@@ -9,12 +9,13 @@ from my_dataloader import *
 from torch.utils.data import DataLoader
 from residual_cnn_1d import *
 from sklearn.model_selection import train_test_split, RepeatedKFold
+from custom_loss import *
 # %%
 class Stress_Classification(pl.LightningModule):
     def __init__(self) -> None:
         super().__init__()
-        self.loss = nn.NLLLoss()
-        self.softmax = nn.LogSoftmax(dim=0)
+        self.loss = Cosine_Loss()
+        self.softmax = nn.Softmax(dim=0)
         self.accuracy = Accuracy()
         self.model = Residual_CNN_Model(output_class=2)
         
@@ -78,9 +79,9 @@ class LitProgressBar(TQDMProgressBar):
 # %%
 if __name__ == '__main__':
     SIGNAL_DATAPATH = '../../data/RRI'
-    MASTER_TABLE_DATAPATH = '../../data/master_table.csv'
+    MASTER_TABLE_DATAPATH = '../../data/hrv_master_table.csv'
     
-    pl.seed_everything(1003)
+    pl.seed_everything(1004)
 
     df_orig = pd.read_csv(MASTER_TABLE_DATAPATH)
     
@@ -88,11 +89,11 @@ if __name__ == '__main__':
 
     subject = list(set(df_orig['subject']))
     
-    rkf = RepeatedKFold(n_splits=10, n_repeats=1, random_state=1003)
+    rkf = RepeatedKFold(n_splits=10, n_repeats=1, random_state=1004)
     
     for cv_num, (train_id, test_id) in enumerate(rkf.split(subject)):
         
-        train_id, valid_id = train_test_split(train_id, test_size=1/9, random_state=1003)
+        train_id, valid_id = train_test_split(train_id, test_size=1/9, random_state=1004)
 
         train_data = df_orig.query("subject.isin(@train_id) & session == [1, 2]", engine='python').reset_index(drop=True)
         valid_data = df_orig.query("subject.isin(@valid_id) & session == [1, 2]", engine='python').reset_index(drop=True)
@@ -110,10 +111,10 @@ if __name__ == '__main__':
 
         model = Stress_Classification()
 
-        logger = TensorBoardLogger("tb_logs", name="cv_2", version=cv_num)
+        logger = TensorBoardLogger("tb_logs", name="cosine_loss_cv_1", version=cv_num)
         
         checkpoint_callback = ModelCheckpoint(monitor='val_loss',
-                                      dirpath='check_point/cv_2_'+str(cv_num), 
+                                      dirpath='check_point/cosine_loss_cv_1_'+str(cv_num), 
                                       filename="residual_cnn_{epoch:03d}_{val_loss:.2f}", 
                                       save_top_k=3, 
                                       mode='min')
@@ -137,4 +138,5 @@ if __name__ == '__main__':
         
         df_metric = pd.concat((df_metric, pd.DataFrame([test_metric[0]])), axis=0)
         
-    df_metric.reset_index(drop=True).to_csv("./cv_2_results.csv", index=False)
+    df_metric.reset_index(drop=True).to_csv("./cosine_loss_cv_1_results.csv", index=False)
+# %%
