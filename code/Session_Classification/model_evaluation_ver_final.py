@@ -110,7 +110,7 @@ if __name__ == '__main__':
     
     for cv_num, (train_id, test_id) in enumerate(rkf.split(subject, y=subject['session'])):
         
-        train_id, valid_id = train_test_split(subject.loc[train_id, 'file_nm'], test_size=1/9, random_state=1002, stratify=subject.loc[train_id, 'session'])
+        train_id, valid_id = train_test_split(subject.loc[train_id, 'file_nm'], test_size=1/9, random_state=1004, stratify=subject.loc[train_id, 'session'])
         test_id = subject.loc[test_id, 'file_nm']
         
         train_data = df_orig.query("file_nm.isin(@train_id)", engine='python').reset_index(drop=True)
@@ -166,7 +166,7 @@ if __name__ == '__main__':
         df_metric = pd.concat((df_metric, pd.DataFrame([test_metric[0]])), axis=0)
         
         ## Log ROC and PRC Curve
-        _, _, _, _, _, _, _, _, _, fpr, tpr, precision, recall = performances_hard_decision(np.array(labels), np.array(preds), youden=True)
+        _, _, _, _, _, _, _, _, _, fpr, tpr, precision, recall = performances_hard_decision(np.array(labels), np.array(pred_proba), youden=True)
         mean_fpr = np.linspace(0, 1, 100)
         mean_recall = np.linspace(0, 1, 100)
         interp_tpr = np.interp(mean_fpr, fpr, tpr)
