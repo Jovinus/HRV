@@ -83,8 +83,8 @@ class Stress_Classification(pl.LightningModule):
     
     def predict_step(self, batch, batch_idx):
         x, y = batch
-        self.forward(x)
-        return self.forward(x), y
+        logits = self.forward(x)
+        return logits, y, torch.argmax(logits, dim=1)
 
 class LitProgressBar(TQDMProgressBar):
     def init_validation_tqdm(self):
@@ -121,7 +121,7 @@ if __name__ == '__main__':
         valid_dataset = CustomDataset(data_table=valid_data, data_dir=SIGNAL_DATAPATH)
         test_dataset = CustomDataset(data_table=test_data, data_dir=SIGNAL_DATAPATH)
         
-        trainset_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, collate_fn=padd_seq, num_workers=4)
+        trainset_loader = DataLoader(train_dataset, batch_size=128, shuffle=True, collate_fn=padd_seq, num_workers=4)
         validset_loader = DataLoader(valid_dataset, batch_size=16, shuffle=False, collate_fn=padd_seq, num_workers=4)
         testset_loader = DataLoader(test_dataset, batch_size=16, shuffle=False, collate_fn=padd_seq, num_workers=4)
         
@@ -138,7 +138,7 @@ if __name__ == '__main__':
                                       mode='min')
         
         trainer = pl.Trainer(logger=logger,
-                             max_epochs=300,
+                             max_epochs=400,
                              accelerator='gpu', 
                              devices=[0], 
                              gradient_clip_val=0.3, 
@@ -155,9 +155,10 @@ if __name__ == '__main__':
         
         ## Log Prediction and Label
         results = trainer.predict(model, dataloaders=testset_loader)
-        preds =  torch.vstack([results[i][0] for i in range(len(results))]).cpu().numpy()[:, 1].tolist()
+        pred_proba =  torch.vstack([results[i][0] for i in range(len(results))]).cpu().numpy()[:, 1].tolist()
         labels = torch.hstack([results[i][1] for i in range(len(results))]).cpu().numpy().tolist()
-        pred_log = {'pred':preds, 'label':labels}
+        preds = torch.hstack([results[i][2] for i in range(len(results))]).cpu().numpy().tolist()
+        pred_log = {'pred_proba':pred_proba, 'label':labels, 'pred':preds}
         df_con_matrix = pd.concat((df_con_matrix, pd.DataFrame(pred_log)), axis=0)
         
         ## Log Metrics
