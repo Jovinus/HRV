@@ -16,7 +16,7 @@ class Stress_Classification(pl.LightningModule):
     def __init__(self) -> None:
         super().__init__()
         self.loss = Cosine_Loss()
-        self.softmax = nn.Softmax(dim=0)
+        self.softmax = nn.Softmax(dim=1)
         self.accuracy = Accuracy()
         self.model = Residual_CNN_Model(output_class=2)
         
@@ -33,7 +33,7 @@ class Stress_Classification(pl.LightningModule):
         x, y = batch
         logits = self(x)
         loss = self.loss(logits, y)
-        acc = self.accuracy(logits, y)
+        acc = self.accuracy(torch.argmax(logits, dim=1), y)
         
         self.log('train_loss', loss)
         self.log('train_acc', acc)
@@ -44,7 +44,7 @@ class Stress_Classification(pl.LightningModule):
         x, y = batch
         logits = self.forward(x)
         loss = self.loss(logits, y)
-        val_acc = self.accuracy(logits, y)
+        val_acc = self.accuracy(torch.argmax(logits, dim=1), y)
         
         return {'loss':loss, 'val_acc':val_acc}
     
@@ -60,7 +60,7 @@ class Stress_Classification(pl.LightningModule):
         x, y = batch
         logits = self(x)
         loss = self.loss(logits, y)
-        acc = self.accuracy(logits, y)
+        acc = self.accuracy(torch.argmax(logits, dim=1), y)
         
         logits = logits.cpu().numpy()[:, -1]
         y = y.cpu().numpy()
@@ -96,7 +96,7 @@ if __name__ == '__main__':
     SIGNAL_DATAPATH = '../../data/RRI'
     MASTER_TABLE_DATAPATH = '../../data/hrv_master_table.csv'
     
-    pl.seed_everything(1004)
+    pl.seed_everything(1004, workers=True)
 
     df_orig = pd.read_csv(MASTER_TABLE_DATAPATH)
     
@@ -129,10 +129,10 @@ if __name__ == '__main__':
         
         model = Stress_Classification()
         
-        logger = TensorBoardLogger("tb_logs", name="stress_final", version=cv_num)
+        logger = TensorBoardLogger("tb_logs", name="stress_final_1", version=cv_num)
         
         checkpoint_callback = ModelCheckpoint(monitor='val_loss',
-                                      dirpath='check_point/stress_final_'+str(cv_num), 
+                                      dirpath='check_point/stress_final_1_'+str(cv_num), 
                                       filename="residual_cnn_{epoch:03d}_{val_loss:.2f}", 
                                       save_top_k=3, 
                                       mode='min')
@@ -144,7 +144,8 @@ if __name__ == '__main__':
                              gradient_clip_val=0.3, 
                              log_every_n_steps=1, 
                              accumulate_grad_batches=1,
-                             callbacks=[bar, checkpoint_callback])
+                             callbacks=[bar, checkpoint_callback], 
+                             deterministic=True)
         
         trainer.fit(model, 
                     train_dataloaders = trainset_loader, 
@@ -174,7 +175,7 @@ if __name__ == '__main__':
         fig_result['cv_num'] = cv_num
         df_fig_curve = pd.concat((df_fig_curve, fig_result), axis=0)
         
-    df_metric.reset_index(drop=True).to_csv("./stress_final_results_final.csv", index=False)
-    df_con_matrix.reset_index(drop=True).to_csv("./stress_final_conf_pred_results_final.csv", index=False)
-    df_fig_curve.reset_index(drop=True).to_csv("./stress_final_fig_results_final.csv", index=False)
+    df_metric.reset_index(drop=True).to_csv("./stress_final_1_results_final.csv", index=False)
+    df_con_matrix.reset_index(drop=True).to_csv("./stress_final_1_conf_pred_results_final.csv", index=False)
+    df_fig_curve.reset_index(drop=True).to_csv("./stress_final_1_fig_results_final.csv", index=False)
 # %%
