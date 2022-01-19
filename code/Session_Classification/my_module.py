@@ -69,8 +69,8 @@ def plot_roc_curve_in_one(x, y, data, metric, feature_order):
     for feature in feature_order:
         
         data_feature = data.query("feature == @feature").reset_index(drop=True)
-        mean = metric.query("feature == @feature")['test_roc_auc'].mean() 
-        std = metric.query("feature == @feature")['test_roc_auc'].std()
+        mean = metric.query("feature == @feature")['test_auroc'].mean() 
+        std = metric.query("feature == @feature")['test_auroc'].std()
         
         x_ = np.array(data_feature[x]).reshape(-1, 100)
         y_ = np.array(data_feature[y]).reshape(-1, 100)
@@ -97,7 +97,7 @@ def plot_roc_curve_in_one(x, y, data, metric, feature_order):
     plt.ylabel("Sensitivity", fontsize=18)
     plt.legend(fontsize=13)
     plt.grid()
-    plt.savefig(fname="../result/auroc_fig", dpi=500)
+    plt.savefig(fname="./auroc_fig", dpi=500)
     plt.show()
 
 def plot_prc_curve(x, y, data, mean, std):
@@ -138,8 +138,8 @@ def plot_prc_curve_in_one(x, y, data, metric, feature_order):
     for feature in feature_order:
         
         data_feature = data.query("feature == @feature").reset_index(drop=True)
-        mean = metric.query("feature == @feature")['test_pr_auc'].mean() 
-        std = metric.query("feature == @feature")['test_pr_auc'].std()
+        mean = metric.query("feature == @feature")['test_auprc'].mean() 
+        std = metric.query("feature == @feature")['test_auprc'].std()
         
         x_ = np.array(data_feature[x]).reshape(-1, 100)
         y_ = np.array(data_feature[y]).reshape(-1, 100)
@@ -166,5 +166,5 @@ def plot_prc_curve_in_one(x, y, data, metric, feature_order):
     plt.ylabel("Precision", fontsize=18)
     plt.legend(fontsize=13)
     plt.grid()
-    plt.savefig(fname="../result/auprc_fig", dpi=500)
+    plt.savefig(fname="./auprc_fig", dpi=500)
     plt.show()
