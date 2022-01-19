@@ -1,1 +1,4 @@
 data/
+code/Session_Classification/__pycache__
+code/Session_Classification/check_point
+code/Session_Classification/tb_logs
