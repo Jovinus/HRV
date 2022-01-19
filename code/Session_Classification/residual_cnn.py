@@ -11,7 +11,7 @@ class Residual_Block(pl.LightningModule):
         self.conv_1_1 = nn.Conv1d(kernel_size=1, stride=stride, in_channels=input_channels, out_channels=output_channels)
         
         self.conv_layers = nn.Sequential(nn.Conv1d(in_channels=input_channels, out_channels=hidden_channels, kernel_size=15, stride=stride, padding=7), 
-                                         nn.BatchNorm1d(num_features=hidden_channels), 
+                                         nn.BatchNorm1d(num_features=hidden_channels),
                                          nn.ReLU(),
                                          nn.Conv1d(in_channels=hidden_channels, out_channels=output_channels, kernel_size=15, stride=1, padding=7), 
                                          nn.BatchNorm1d(num_features=output_channels), 
