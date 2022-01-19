@@ -13,20 +13,12 @@ from residual_cnn import *
 class Sequence_Modeling(pl.LightningModule):
     def __init__(self) -> None:
         super().__init__()
-        # self.rnn = nn.GRU(input_size=1, hidden_size=500, num_layers=2, batch_first=True, bidirectional=True, dropout=0.6)
-        # self.linear_0 = nn.Linear(1000, 100)
-        # self.linear_1 = nn.Linear(100, 2)
         self.loss = nn.NLLLoss()
         self.softmax = nn.LogSoftmax(dim=0)
         self.accuracy = Accuracy()
-        # self.model = CNN_FC_layer(output_class=2)
-        # self.model = DNN_Model(output_class=2)
         self.model = Residual_CNN_Model(output_class=2)
         
     def forward(self, x):
-        # output, h1 = self.rnn(x)
-        # h2 = torch.relu(self.linear_0(output[:, -1, :]))
-        # logits = self.softmax(torch.relu(self.linear_1(h2)))
         logits = self.model(x)
         logits = self.softmax(logits) 
         return logits
