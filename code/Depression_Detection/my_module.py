@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 plt.rcParams['xtick.labelsize'] = 15
 plt.rcParams['ytick.labelsize'] = 15
 
+epsilon = 1e-10
 
 def performances_hard_decision(y_test, y_proba, threshold_of_interest=0.5, youden=False):
     
@@ -20,12 +21,12 @@ def performances_hard_decision(y_test, y_proba, threshold_of_interest=0.5, youde
     
     tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
 
-    ppv = tp / (tp+fp)
-    sensitivity = tp / (tp+fn)
-    specificity = tn / (tn+fp)
-    npv = tn / (tn+fn)
-    accuracy = (tp+tn) / (tp+tn+fp+fn)
-    f1 = (2 * ppv * sensitivity) / (ppv + sensitivity)
+    ppv = tp / (tp+fp+epsilon)
+    sensitivity = tp / (tp+fn+epsilon)
+    specificity = tn / (tn+fp+epsilon)
+    npv = tn / (tn+fn+epsilon)
+    accuracy = (tp+tn) / (tp+tn+fp+fn+epsilon)
+    f1 = (2 * ppv * sensitivity) / (ppv + sensitivity+epsilon)
     
     return specificity, sensitivity, ppv, npv, f1, accuracy, threshold_of_interest, roc_auc, pr_auc, fpr, tpr, precision, recall
 
