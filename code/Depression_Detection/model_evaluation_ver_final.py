@@ -44,26 +44,20 @@ class Depression_Detection(pl.LightningModule):
         x, y = batch
         logits = self.forward(x)
         loss = self.loss(logits, y)
+        
         val_acc = self.accuracy(torch.argmax(logits, dim=1), y)
+        metrics = {"val_loss":loss, "val_acc":val_acc}
+        self.log_dict(metrics, prog_bar=True)
         
         return {'loss':loss, 'val_acc':val_acc}
     
-    def validation_epoch_end(self, val_step_outputs):
-        avg_val_loss = torch.tensor([x['loss'] for x in val_step_outputs]).mean()
-        avg_val_acc = torch.tensor([x['val_acc'] for x in val_step_outputs]).mean()
-        
-        metrics = {"val_loss":avg_val_loss, "val_acc":avg_val_acc}
-        
-        self.log_dict(metrics, prog_bar=True)
-    
-    def evaluate(self, batch, stage=None):
-        x, y = batch
-        logits = self(x)
-        loss = self.loss(logits, y)
-        acc = self.accuracy(torch.argmax(logits, dim=1), y)
+    def evaluate(self, y_true, y_pred, stage=None):
+        logits = y_pred
+        loss = self.loss(logits, y_true)
+        acc = self.accuracy(torch.argmax(logits, dim=1), y_true)
         
         logits = logits.cpu().numpy()[:, -1]
-        y = y.cpu().numpy()
+        y = y_true.cpu().numpy()
         specificity, sensitivity, ppv, npv, f1, accuracy, threshold_of_interest, roc_auc, pr_auc, _, _, _, _ = performances_hard_decision(y, logits, youden=True)
         
         metrics = {'test_loss':loss, 'test_acc':acc, 
@@ -79,7 +73,9 @@ class Depression_Detection(pl.LightningModule):
         return metrics
     
     def test_step(self, batch, batch_idx):
-        return self.evaluate(batch, 'test')
+        x, y = batch
+        logits = self(x)
+        return self.evaluate(y_true=y, y_pred=logits, stage='test')
     
     def predict_step(self, batch, batch_idx):
         x, y = batch
@@ -122,8 +118,8 @@ if __name__ == '__main__':
         test_dataset = CustomDataset(data_table=test_data, data_dir=SIGNAL_DATAPATH)
         
         trainset_loader = DataLoader(train_dataset, batch_size=16, shuffle=True, collate_fn=padd_seq, num_workers=4)
-        validset_loader = DataLoader(valid_dataset, batch_size=2, shuffle=False, collate_fn=padd_seq, num_workers=2)
-        testset_loader = DataLoader(test_dataset, batch_size=2, shuffle=False, collate_fn=padd_seq, num_workers=2)
+        validset_loader = DataLoader(valid_dataset, batch_size=4, shuffle=False, collate_fn=padd_seq, num_workers=4)
+        testset_loader = DataLoader(test_dataset, batch_size=4, shuffle=False, collate_fn=padd_seq, num_workers=4)
         
         bar = LitProgressBar()
         
@@ -179,6 +175,4 @@ if __name__ == '__main__':
     df_metric.reset_index(drop=True).to_csv("./dep_test_results_final.csv", index=False)
     df_con_matrix.reset_index(drop=True).to_csv("./dep_test_conf_pred_results_final.csv", index=False)
     df_fig_curve.reset_index(drop=True).to_csv("./dep_test_fig_results_final.csv", index=False)
-# %%
-
 # %%
