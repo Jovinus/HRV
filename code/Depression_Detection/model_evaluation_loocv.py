@@ -15,7 +15,8 @@ from my_module import *
 class Depression_Detection(pl.LightningModule):
     def __init__(self) -> None:
         super().__init__()
-        self.loss = Cosine_Loss()
+        # self.loss = Cosine_Loss()
+        self.loss = nn.CrossEntropyLoss()
         self.softmax = nn.Softmax(dim=1)
         self.accuracy = Accuracy()
         self.model = Residual_CNN_Model(output_class=2)
@@ -105,16 +106,13 @@ if __name__ == '__main__':
     rkf_outer = RepeatedKFold(n_splits=78, n_repeats=1, random_state=1004)
     rkf_inner = RepeatedStratifiedKFold(n_splits=5, n_repeats=1, random_state=1004)
     
-    for cv_num_outer, (train_id, test_id) in enumerate(rkf_outer.split(subject, y=subject['label'])):
-        
-        for cv_num_inner, (train_id, valid_id) in enumerate(rkf_inner.split(subject.iloc[train_id], y=subject.iloc[train_id]['label'])):
-        
-            train_id, valid_id = train_test_split(subject.loc[train_id, 'subject'], test_size=1/9, random_state=1004, stratify=subject.loc[train_id, 'label'])
-            test_id = subject.loc[test_id, 'subject']
+    for cv_num_outer, (train_val_index, test_index) in enumerate(rkf_outer.split(subject, y=subject['label'])):
+        test_data = subject.loc[test_index].reset_index(drop=True)
+        train_val_data = subject.loc[train_val_index].reset_index(drop=True)
+        for cv_num_inner, (train_index, valid_index) in enumerate(rkf_inner.split(train_val_data, y=train_val_data['label'])):
             
-            train_data = df_orig.query("subject.isin(@train_id) & visit == 1", engine='python').reset_index(drop=True)
-            valid_data = df_orig.query("subject.isin(@valid_id) & visit == 1", engine='python').reset_index(drop=True)
-            test_data = df_orig.query("subject.isin(@test_id) & visit == 1", engine='python').reset_index(drop=True)
+            train_data = subject.loc[train_index].reset_index(drop=True)
+            valid_data = subject.loc[valid_index].reset_index(drop=True)
             
             train_dataset = CustomDataset(data_table=train_data, data_dir=SIGNAL_DATAPATH)
             valid_dataset = CustomDataset(data_table=valid_data, data_dir=SIGNAL_DATAPATH)
@@ -122,13 +120,13 @@ if __name__ == '__main__':
             
             trainset_loader = DataLoader(train_dataset, batch_size=16, shuffle=True, collate_fn=padd_seq, num_workers=4)
             validset_loader = DataLoader(valid_dataset, batch_size=4, shuffle=False, collate_fn=padd_seq, num_workers=4)
-            testset_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, collate_fn=padd_seq, num_workers=1)
+            testset_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, collate_fn=padd_seq, num_workers=4)
             
             bar = LitProgressBar()
             
             model = Depression_Detection()
             
-            logger = TensorBoardLogger("tb_logs", name="dep_test_loocv_1", version=cv_num_outer)
+            logger = TensorBoardLogger("tb_logs", name="dep_test_loocv_1", version="cross_val_outer_"+str(cv_num_outer) + '_inner_' + str(cv_num_inner))
             
             checkpoint_callback = ModelCheckpoint(monitor='val_loss',
                                         dirpath='check_point/dep_test_loocv_1_outer'+str(cv_num_outer)+'_inner_'+str(cv_num_inner), 
@@ -139,7 +137,7 @@ if __name__ == '__main__':
             trainer = pl.Trainer(logger=logger,
                                 max_epochs=400,
                                 accelerator='gpu', 
-                                devices=[0], 
+                                devices=[2], 
                                 gradient_clip_val=0.3, 
                                 log_every_n_steps=1, 
                                 accumulate_grad_batches=2,
