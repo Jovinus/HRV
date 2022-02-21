@@ -24,21 +24,29 @@ class CustomDataset(Dataset):
         
         data_path = os.path.join(self.data_dir, self.master.loc[idx, 'session_1.0'])
         rri_1 = read_json_to_tensor(datapath=data_path)
+        d_rri_1 = torch.diff(rri_1)
         
         data_path = os.path.join(self.data_dir, self.master.loc[idx, 'session_2.0'])
         rri_2 = read_json_to_tensor(datapath=data_path)
+        d_rri_2 = torch.diff(rri_2)
         
         data_path = os.path.join(self.data_dir, self.master.loc[idx, 'session_3.0'])
         rri_3 = read_json_to_tensor(datapath=data_path)
+        d_rri_3 = torch.diff(rri_3)
         
         data_path = os.path.join(self.data_dir, self.master.loc[idx, 'session_4.0'])
         rri_4 = read_json_to_tensor(datapath=data_path)
+        d_rri_4 = torch.diff(rri_4)
         
         data_path = os.path.join(self.data_dir, self.master.loc[idx, 'session_5.0'])
         rri_5 = read_json_to_tensor(datapath=data_path)
+        d_rri_5 = torch.diff(rri_5)
         
         rri = torch.cat((rri_1, rri_2, rri_3, rri_4, rri_5), dim=0)
         rri_mean, rri_std = torch.mean(rri), torch.std(rri)
+        
+        d_rri = torch.cat((d_rri_1, d_rri_2, d_rri_3, d_rri_4, d_rri_5), dim=0)
+        d_rri_mean, d_rri_std = torch.mean(d_rri), torch.std(d_rri)
         
         ## Normalizing
         rri_1 = (rri_1 - rri_mean) / rri_std
@@ -47,9 +55,15 @@ class CustomDataset(Dataset):
         rri_4 = (rri_4 - rri_mean) / rri_std
         rri_5 = (rri_5 - rri_mean) / rri_std
         
+        d_rri_1 = (d_rri_1 - d_rri_mean) / d_rri_std
+        d_rri_2 = (d_rri_2 - d_rri_mean) / d_rri_std
+        d_rri_3 = (d_rri_3 - d_rri_mean) / d_rri_std
+        d_rri_4 = (d_rri_4 - d_rri_mean) / d_rri_std
+        d_rri_5 = (d_rri_5 - d_rri_mean) / d_rri_std
+        
         label = self.master.loc[idx, 'label']
         
-        return  rri_1, rri_2, rri_3, rri_4, rri_5, label
+        return  d_rri_1, d_rri_2, d_rri_3, d_rri_4, d_rri_5, label
 
 # %%
 def read_json_to_tensor(datapath):
